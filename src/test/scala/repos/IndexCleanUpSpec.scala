@@ -83,15 +83,15 @@ class IndexCleanUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers 
 
         val r = TableJanitor.catchUpForRepo(db, db, System.currentTimeMillis(), statusTable, FooRepo,
           State(0, 0, Vector.empty))
-        //r must be(State(7, 7, Vector.empty))
         val newStatus = TableJanitor.loadJanitorIndexStatus(db)
-        /*newStatus must be(Map(
-          "ix3_foo__text_text" -> 7,
-          "ix3_foo__len_index" -> 7,
-          "ix3_foo__first_ch" -> 7,
-          "ix3_foo__first_two_ch" -> 7,
-          "ix3_foo__seq" -> 7
-        ))*/
+        val nameOfFullTable = FooRepo.name
+        val nameOfIndex =
+          db.asInstanceOf[JdbcDb].innerIndex(
+            SecondaryIndex(FooRepo,FooRepo.firstAtLeastTwoIndex.name,FooRepo.firstAtLeastTwoIndex.projection)
+          ).ix3TableName
+        val countOfFullTable = IndexUtil.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
+        val countOfIndexTable = IndexUtil.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
+        countOfIndexTable must be < countOfFullTable
     }
   }
 }
