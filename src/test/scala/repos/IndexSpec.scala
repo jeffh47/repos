@@ -60,6 +60,11 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
       await(db.run(FooRepo.insert(id5, "ababa")))
       await(db.run(FooRepo.insert(id6, "")))
 
+      // mutate so that an object included in the partialIndexTable becomes excluded from the partialIndexTable
+      await(db.run(FooRepo.delete(Set(id2))))
+      await(db.run(FooRepo.insert(id2, "1")))
+      // See also: .insertWithoutLatest
+
       val nameOfFullTable = FooRepo.name
       val nameOfIndex =
         db.asInstanceOf[JdbcDb].innerIndex(
