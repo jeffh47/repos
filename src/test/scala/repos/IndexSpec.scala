@@ -19,14 +19,9 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
     val jdb = TestUtils.makeH2DB()
     val JdbcDb = TestUtils.makeH2JdbcDb(jdb)
 
-    object InMemDb extends InMemDb
-
     await(JdbcDb.run(FooRepo.create()))
-    await(InMemDb.run(FooRepo.create()))
     try {
-      val o = test(JdbcDb)
-      if (!o.isSucceeded) o
-      else test(InMemDb)
+      test(JdbcDb)
     } finally {
       jdb.shutdown
     }
