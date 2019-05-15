@@ -18,6 +18,12 @@ object FooRepo extends Repo[FooId, String]("foo") {
 
   def firstTwoIndex = indexTable("first_two_ch")(_.take(2))
 
+  def takeAtLeastTwo : PartialFunction[String,String] = {
+    case s if s.size >= 2 => s.take(2)
+  }
+
+  def firstAtLeastTwoIndex = partialIndexTable("first_at_least_two_ch")(takeAtLeastTwo)
+
   def seqIndex = multiIndexTable("seq")(_.toSeq)
 }
 

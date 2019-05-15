@@ -63,7 +63,7 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
       val nameOfFullTable = FooRepo.name
       val nameOfIndex =
         db.asInstanceOf[JdbcDb].innerIndex(
-          SecondaryIndex(FooRepo,FooRepo.firstCharIndex.name,FooRepo.firstCharIndex.projection)
+          SecondaryIndex(FooRepo,FooRepo.firstAtLeastTwoIndex.name,FooRepo.firstAtLeastTwoIndex.projection)
         ).ix3TableName
       val countOfFullTable = sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
       val countOfIndexTable = sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
