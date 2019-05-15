@@ -28,4 +28,18 @@ object IndexUtil {
     await(db.run(FooRepo.insert(id2, "1")))
     // See also: .insertWithoutLatest
   }
+  // TODO: remove blocking
+  def sizeOfTable(db:JdbcDb, nameOfTable:String) : Int = {
+    {
+      val s = db.asInstanceOf[JdbcDb].db.source.createConnection().createStatement()
+      val sql = s"select count(*) as a from ${nameOfTable}"
+      s.execute( sql)
+      val rs = s.getResultSet()
+      rs.next()
+      val num = rs.getInt("a")
+      // useful for debugging:
+      //println(s"sql=${sql}\ncount=${num}")
+      num
+    }
+  }
 }

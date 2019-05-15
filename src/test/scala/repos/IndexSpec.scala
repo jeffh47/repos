@@ -30,21 +30,6 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
   class FooTable(tableName:String) extends slick.model.Table(QualifiedName(tableName), Seq(), None, Seq(), Seq(), Set()) {
   }
 
-  // TODO: remove blocking
-  def sizeOfTable(db:JdbcDb, nameOfTable:String) : Int = {
-    {
-      val s = db.asInstanceOf[JdbcDb].db.source.createConnection().createStatement()
-      val sql = s"select count(*) as a from ${nameOfTable}"
-      s.execute( sql)
-      val rs = s.getResultSet()
-      rs.next()
-      val num = rs.getInt("a")
-      // useful for debugging:
-      //println(s"sql=${sql}\ncount=${num}")
-      num
-    }
-  }
-
   "partial indexes" should "have records cleaned up" in {
     db =>
       IndexUtil.populateData1(db)
@@ -53,8 +38,8 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
         db.asInstanceOf[JdbcDb].innerIndex(
           SecondaryIndex(FooRepo,FooRepo.firstAtLeastTwoIndex.name,FooRepo.firstAtLeastTwoIndex.projection)
         ).ix3TableName
-      val countOfFullTable = sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
-      val countOfIndexTable = sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
+      val countOfFullTable = IndexUtil.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
+      val countOfIndexTable = IndexUtil.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
       countOfIndexTable must be < countOfFullTable
   }
 }
