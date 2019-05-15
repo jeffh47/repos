@@ -47,24 +47,7 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
 
   "partial indexes" should "have records cleaned up" in {
     db =>
-      val id1 = FooId(UUID.randomUUID())
-      val id2 = FooId(UUID.randomUUID())
-      val id3 = FooId(UUID.randomUUID())
-      val id4 = FooId(UUID.randomUUID())
-      val id5 = FooId(UUID.randomUUID())
-      val id6 = FooId(UUID.randomUUID())
-      await(db.run(FooRepo.insert(id1, "8")))
-      await(db.run(FooRepo.insert(id2, "14")))
-      await(db.run(FooRepo.insert(id3, "275")))
-      await(db.run(FooRepo.insert(id4, "35")))
-      await(db.run(FooRepo.insert(id5, "ababa")))
-      await(db.run(FooRepo.insert(id6, "")))
-
-      // mutate so that an object included in the partialIndexTable becomes excluded from the partialIndexTable
-      await(db.run(FooRepo.delete(Set(id2))))
-      await(db.run(FooRepo.insert(id2, "1")))
-      // See also: .insertWithoutLatest
-
+      IndexUtil.populateData1(db)
       val nameOfFullTable = FooRepo.name
       val nameOfIndex =
         db.asInstanceOf[JdbcDb].innerIndex(
