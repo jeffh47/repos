@@ -241,6 +241,7 @@ object TableJanitor {
         inner.indexTable.asInstanceOf[lifted.TableQuery[JdbcDb#Ix3Table[Id, R]]]
           .filter(_.parentPk inSet pksToIndex).map(_.parentPk).result).toSet
     val unindexedEntries = entries.filterNot(e => alreadyIndexedPk.contains(e._2))
+    //todo delete first
     if (unindexedEntries.nonEmpty) {
       jdbcDb.jc.blockingWrapper(inner.buildInsertAction(unindexedEntries))
       log(s"Repo ${indexTable.repo.name}: indexed ${unindexedEntries.size} entries into ${indexTable.name}")

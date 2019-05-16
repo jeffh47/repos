@@ -14,7 +14,7 @@ import repos.testutils.{FooId, FooRepo, TestUtils}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class IndexCleanUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with LoneElement with Inside {
+class IndexCatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with LoneElement with Inside {
   spec =>
 
   type FixtureParam = CatchUpTest
@@ -74,8 +74,8 @@ class IndexCleanUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers 
     }
   }
 
-  "indexCleanUpSpec" must {
-    "be able to catch all indexes from scratch" in {
+  "TableJanitor" must {
+    "be able to catch up all indices from scratch" in {
       t =>
         import t._
         t.createTable()

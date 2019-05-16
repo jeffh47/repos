@@ -10,7 +10,7 @@ import repos.SecondaryIndexQueries._
 import repos._
 import slick.dbio.Effect.Read
 import slick.driver.JdbcProfile
-import slick.lifted.CanBeQueryCondition
+import slick.lifted._
 import slick.profile.FixedSqlStreamingAction
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,6 +45,8 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
       def insertWithoutLatestAction =
         for {
           pkList <- entryTable.returning(entryTable.map(_.pk)) ++= newEntries
+          _ <- DBIO.sequence(effectiveIndexMap.values.map(
+            _.buildDeleteAction(elements.map(_._1).toSet)))
           _ <- DBIO.sequence(effectiveIndexMap.values.map(
             _.buildInsertAction(elements zip pkList)))
         } yield pkList
@@ -132,6 +134,9 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
       def ix3TableName: String = s"ix3_${index.repo.name}__${index.name}"
 
       val indexTable = new TableQuery(new Ix3Table[Id, R](_, ix3TableName)(repo.idMapper, repo.idClass, baseColumnType(rp)))
+
+      def buildDeleteAction(ids: Set[Id]) =
+        indexTable.filter(_.id.inSet(ids)).delete
 
       def buildInsertAction(entries: Iterable[((Id, M), Long)]) = {
         indexTable ++= (for {

@@ -30,7 +30,7 @@ class IndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with Op
   class FooTable(tableName:String) extends slick.model.Table(QualifiedName(tableName), Seq(), None, Seq(), Seq(), Set()) {
   }
 
-  "partial indexes" should "have records cleaned up" in {
+  "Partial index" should "lack records for un-matched inputs" in {
     db =>
       IndexUtil.populateData1(db)
       val nameOfFullTable = FooRepo.name
