@@ -46,8 +46,6 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
         for {
           pkList <- entryTable.returning(entryTable.map(_.pk)) ++= newEntries
           _ <- DBIO.sequence(effectiveIndexMap.values.map(
-            _.buildDeleteAction(elements.map(_._1).toSet)))
-          _ <- DBIO.sequence(effectiveIndexMap.values.map(
             _.buildInsertAction(elements zip pkList)))
         } yield pkList
       // Build the insert as a single DBAction.
@@ -62,6 +60,10 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
           _ <- DBIO.sequence((newEntries zip pkList).toSeq.sortBy(t => idMapper.toUUID(t._1.id)).map {
             e => latestEntryTable.insertOrUpdate((e._1.id, e._1.entry, e._2))
           })
+          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isLatest).map(
+            _.buildDeleteAction(elements.map(_._1).toSet)))
+          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isLatest).map(
+            _.buildInsertAction(elements zip pkList)))
         } yield pkList
         db.run(r.transactionally)
       } else {
@@ -119,7 +121,7 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
       db.run(s).map(_ => ())
     }
 
-    class IndexTableImpl[R](index: SecondaryIndex[Id, M, R])(implicit rp: ProjectionType[R]) {
+    class IndexTableImpl[R](val index: SecondaryIndex[Id, M, R])(implicit rp: ProjectionType[R]) {
       implicit def baseColumnType[R](implicit p: ProjectionType[R]): BaseColumnType[R] = p match {
         case ProjectionType.BooleanProjection => implicitly[BaseColumnType[Boolean]]
         case ProjectionType.IntProjection => implicitly[BaseColumnType[Int]]

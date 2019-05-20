@@ -24,6 +24,8 @@ object FooRepo extends Repo[FooId, String]("foo") {
 
   def firstAtLeastTwoIndex = partialIndexTable("first_at_least_two_ch")(takeAtLeastTwo)
 
+  def firstAtLeastTwoLatestIndex = partialIndexTable("first_at_least_two_ch_latest", true)(takeAtLeastTwo)
+
   def seqIndex = multiIndexTable("seq")(_.toSeq)
 }
 

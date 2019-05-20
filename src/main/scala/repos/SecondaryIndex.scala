@@ -6,8 +6,8 @@ import repos.SecondaryIndex.ProjectionType
 import scala.language.existentials
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
-
-case class SecondaryIndex[Id, M, R](repo: Repo[Id, M], name: String, projection: M => Seq[R])(implicit val projectionType : ProjectionType[R])
+//todo: preserve binary compat
+case class SecondaryIndex[Id, M, R](repo: Repo[Id, M], name: String, projection: M => Seq[R], isLatest: Boolean = false)(implicit val projectionType : ProjectionType[R])
 
 class SecondaryIndexQueries[Id, M, R](val index: SecondaryIndex[Id, M, R]) extends AnyVal {
   import SecondaryIndexQueries._

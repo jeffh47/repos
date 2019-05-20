@@ -53,11 +53,11 @@ class Repo[Id, M](val name: String)(implicit val idMapper: IdMapper[Id], val dat
 
 trait IndexTableMethods[Id, M] {
   this: Repo[Id, M] =>
-  def multiIndexTable[R1 : ProjectionType](name: String)(f: M => Seq[R1]) = SecondaryIndex[Id, M, R1](this, name, f)
+  def multiIndexTable[R1 : ProjectionType](name: String, latest: Boolean = false)(f: M => Seq[R1]) = SecondaryIndex[Id, M, R1](this, name, f, latest)
 
-  def indexTable[R1 : ProjectionType](name: String)(f: M => R1) = multiIndexTable[R1](name) { m: M => Seq(f(m)) }
+  def indexTable[R1 : ProjectionType](name: String, latest: Boolean = false)(f: M => R1) = multiIndexTable[R1](name, latest) { m: M => Seq(f(m)) }
 
-  def partialIndexTable[R1 : ProjectionType](name: String)(f: PartialFunction[M, R1]) = multiIndexTable[R1](name)(f.lift.andThen(_.toSeq))
+  def partialIndexTable[R1 : ProjectionType](name: String, latest: Boolean = false)(f: PartialFunction[M, R1]) = multiIndexTable[R1](name, latest)(f.lift.andThen(_.toSeq))
 }
 
 abstract class RepoPublisher[T] extends Publisher[T] {

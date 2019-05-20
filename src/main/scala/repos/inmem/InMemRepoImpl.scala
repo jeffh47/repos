@@ -30,7 +30,11 @@ private class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     }
     main ++= entries
     val prepared: Seq[(Id, (Long, M))] = entries.map(e => e.id -> (e.pk, e.entry))
-    indexMap.values.foreach(_.indexAction(prepared))
+    indexMap.values.foreach { indexTable =>
+      if(indexTable.index.isLatest)
+        indexTable.deleteAction(prepared.map(_._1).toSet)
+      indexTable.indexAction(prepared)
+    }
     pk += pairs.length
     prepared
   }
@@ -57,9 +61,12 @@ private class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
       .toVector
   }
 
-  class InnerIndex[R](index: SecondaryIndex[Id, M, R]) {
+  class InnerIndex[R](val index: SecondaryIndex[Id, M, R]) {
     val data = new mutable.HashMap[R, mutable.Set[(Long, Id)]] with mutable.MultiMap[R, (Long, Id)]
     implicit def rOrdering: Ordering[R] = index.projectionType.ordering
+
+    def deleteAction(ids: Set[Id]): Unit =
+      for { e <- data; v <- e._2 } if(ids.contains(v._2)) data.removeBinding(e._1, v)
 
     def indexAction(entries: Iterable[(Id, (Long, M))]) = {
       for {
