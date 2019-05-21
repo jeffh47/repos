@@ -172,6 +172,7 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
         } yield m.value)
 
       def criteriaToSqlFilter(criteria: LookupCriteria[R]): (Rep[R] => Rep[Boolean]) = criteria match {
+        case All() => _ => true
         case Equals(v) => _ === v
         case InSet(vs) => _.inSet(vs)
         case LargerThan(v) => _ > v

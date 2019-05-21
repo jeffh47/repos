@@ -1,17 +1,15 @@
 package repos
 
-import org.reactivestreams.{Subscription, Subscriber, Publisher}
+import org.reactivestreams.{ Publisher, Subscriber, Subscription }
 import repos.SecondaryIndex._
-
 import scala.language.implicitConversions
-
-import scala.concurrent.{Promise, Future, ExecutionContext}
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.language.higherKinds
 import scala.language.existentials
 import scala.reflect.ClassTag
 import Action._
-
-import scala.util.{Failure, Success}
+import org.slf4j.LoggerFactory
+import scala.util.{ Failure, Success }
 
 class Repo[Id, M](val name: String)(implicit val idMapper: IdMapper[Id], val dataMapper: DataMapper[M], val idClass: ClassTag[Id], val mClass: ClassTag[M]) extends IndexTableMethods[Id, M] {
   self =>
@@ -53,11 +51,27 @@ class Repo[Id, M](val name: String)(implicit val idMapper: IdMapper[Id], val dat
 
 trait IndexTableMethods[Id, M] {
   this: Repo[Id, M] =>
-  def multiIndexTable[R1 : ProjectionType](name: String, latest: Boolean = false)(f: M => Seq[R1]) = SecondaryIndex[Id, M, R1](this, name, f, latest)
 
-  def indexTable[R1 : ProjectionType](name: String, latest: Boolean = false)(f: M => R1) = multiIndexTable[R1](name, latest) { m: M => Seq(f(m)) }
+  protected val logger = LoggerFactory.getLogger(getClass)
 
-  def partialIndexTable[R1 : ProjectionType](name: String, latest: Boolean = false)(f: PartialFunction[M, R1]) = multiIndexTable[R1](name, latest)(f.lift.andThen(_.toSeq))
+  private def secondaryIndex[R1 : ProjectionType](name: String, onLatest: Boolean = false)(f: M => Seq[R1]) =
+    SecondaryIndex[Id, M, R1](this, name, f, onLatest)
+
+  def multiIndexTable[R1 : ProjectionType](name: String, onLatest: Boolean = false)(f: M => Seq[R1]): SecondaryIndex[Id, M, R1] = {
+    if(!onLatest)
+      logger.warn(s"Creating multi-index $name on non-latest table of repo ${this.name} is likely an error, since no-longer-matched values will not be deleted from the index.")
+    secondaryIndex(name, onLatest)(f)
+  }
+
+  def partialIndexTable[R1 : ProjectionType](name: String, onLatest: Boolean = false)(f: PartialFunction[M, R1]): SecondaryIndex[Id, M, R1] = {
+    if(!onLatest)
+      logger.warn(s"Creating partial index $name on non-latest table of repo ${this.name} is likely an error, since no-longer-matched values will not be deleted from the index.")
+    secondaryIndex[R1](name, onLatest)(f.lift.andThen(_.toSeq))
+  }
+
+  def indexTable[R1 : ProjectionType](name: String, onLatest: Boolean = false)(f: M => R1): SecondaryIndex[Id, M, R1] =
+    secondaryIndex[R1](name, onLatest) { m: M => Seq(f(m)) }
+
 }
 
 abstract class RepoPublisher[T] extends Publisher[T] {

@@ -122,6 +122,8 @@ class CatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with 
           "ix3_foo__len_index" -> 7,
           "ix3_foo__first_ch" -> 7,
           "ix3_foo__first_two_ch" -> 7,
+          "ix3_foo__first_at_least_two_ch" -> 7,
+          "ix3_foo__first_at_least_two_ch_latest" -> 7,
           "ix3_foo__seq" -> 7
         ))
     }
@@ -148,6 +150,8 @@ class CatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with 
             "ix3_foo__len_index" -> 1,
             "ix3_foo__first_ch" -> 1,
             "ix3_foo__first_two_ch" -> 1,
+            "ix3_foo__first_at_least_two_ch" -> 1,
+            "ix3_foo__first_at_least_two_ch_latest" -> 1,
             "ix3_foo__seq" -> 1
           ))
 
@@ -171,6 +175,8 @@ class CatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with 
             "ix3_foo__len_index" -> 2,
             "ix3_foo__first_ch" -> 2,
             "ix3_foo__first_two_ch" -> 2,
+            "ix3_foo__first_at_least_two_ch" -> 2,
+            "ix3_foo__first_at_least_two_ch_latest" -> 2,
             "ix3_foo__seq" -> 2
           ))
 
@@ -184,6 +190,8 @@ class CatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with 
             "ix3_foo__len_index" -> 8,
             "ix3_foo__first_ch" -> 8,
             "ix3_foo__first_two_ch" -> 8,
+            "ix3_foo__first_at_least_two_ch" -> 8,
+            "ix3_foo__first_at_least_two_ch_latest" -> 8,
             "ix3_foo__seq" -> 8
           ))
         }
@@ -199,6 +207,8 @@ class CatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with 
           "ix3_foo__len_index" -> -1L,
           "ix3_foo__first_ch" -> 1000L,
           "ix3_foo__first_two_ch" -> 1000L,
+          "ix3_foo__first_at_least_two_ch" -> 1000L,
+          "ix3_foo__first_at_least_two_ch_latest" -> 1000L,
           "ix3_foo__seq" -> 1000L
         )
         statusTable.foreach {
@@ -215,6 +225,8 @@ class CatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with 
           "ix3_foo__len_index" -> 7,
           "ix3_foo__first_ch" -> 1000,
           "ix3_foo__first_two_ch" -> 1000,
+          "ix3_foo__first_at_least_two_ch" -> 1000,
+          "ix3_foo__first_at_least_two_ch_latest" -> 1000,
           "ix3_foo__seq" -> 1000
         ))
         await(db.run(FooRepo.textIndex.allMatching(d5))) must contain (id5 -> d5)

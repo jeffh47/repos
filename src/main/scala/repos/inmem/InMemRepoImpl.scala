@@ -91,6 +91,7 @@ private class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     def count(c: LookupCriteria[R])(implicit ec: ExecutionContext) = find(c, None, None).size
 
     def criteriaToCollectionFilter(criteria: LookupCriteria[R]): (R => Boolean) = criteria match {
+      case All() => _ => true
       case Equals(v) => _ == v
       case InSet(vs) => vs.contains
       case e@LargerThan(v) => e.ev.gt(_, v)

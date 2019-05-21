@@ -20,6 +20,9 @@ class SecondaryIndexQueries[Id, M, R](val index: SecondaryIndex[Id, M, R]) exten
            count: Option[Int] = None) =
     IndexGetAllAction(index, m(ExpectLookupCriteria(index)), offset = offset, count = count)
 
+  def countAll =
+    IndexCountAction(index, All())
+
   def count(m: LookupFunction) =
     IndexCountAction(index, m(ExpectLookupCriteria(index)))
 
@@ -38,6 +41,8 @@ class SecondaryIndexQueries[Id, M, R](val index: SecondaryIndex[Id, M, R]) exten
 object SecondaryIndexQueries {
   sealed trait LookupCriteria[R]
 
+  case class All[R]() extends LookupCriteria[R]
+
   case class Equals[R](v: R) extends LookupCriteria[R]
 
   case class InSet[R](vs: Set[R]) extends LookupCriteria[R]
@@ -55,6 +60,9 @@ object SecondaryIndexQueries {
   case class StartsWith[R](prefix: String)(implicit ev: R =:= String) extends LookupCriteria[R]
 
   case class ExpectLookupCriteria[R](index: SecondaryIndex[_, _, R]) {
+
+    def all(): All[R] = All()
+
     def matching(v: R): Equals[R] = Equals(v)
 
     def inSet(vs: Set[R]): InSet[R] = InSet(vs)
