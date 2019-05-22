@@ -1,20 +1,17 @@
-package repos
+package repos.jdbc
 
-import java.util.UUID
-
-import akka.actor.{ActorSystem, PoisonPill, Props}
+import akka.actor.{ ActorSystem, PoisonPill }
 import akka.stream.ActorMaterializer
 import akka.testkit.TestProbe
-import org.scalatest.{Inside, LoneElement, MustMatchers}
-import repos.jdbc.{JdbcDb, TableJanitor}
-import repos.{Database, EntryTableRecord}
-import repos.jdbc.TableJanitor.{Gap, State}
+import java.util.UUID
+import org.scalatest._
+import repos.jdbc.TableJanitor.State
 import repos.testutils.TestUtils._
-import repos.testutils.{FooId, FooRepo, TestUtils}
-
+import repos.testutils._
+import repos.SecondaryIndex
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class IndexCatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with LoneElement with Inside {
+class SingleIndexCatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers with LoneElement with Inside {
   spec =>
 
   type FixtureParam = CatchUpTest
@@ -59,7 +56,7 @@ class IndexCatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers 
       import on.profile.api._
       on.jc.blockingWrapper(on.jc.JanitorIndexStatus.schema.create)
       await(on.run(FooRepo.create()))
-      IndexUtil.populateData1(db)
+      DbDataUtils.populateData1(db)
     }
   }
 
@@ -75,7 +72,7 @@ class IndexCatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers 
   }
 
   "TableJanitor" must {
-    "be able to catch up all indices from scratch" in {
+    "be able to catch up an index from scratch" in {
       t =>
         import t._
         t.createTable()
@@ -89,8 +86,8 @@ class IndexCatchUpSpec extends org.scalatest.fixture.WordSpec with MustMatchers 
           db.asInstanceOf[JdbcDb].innerIndex(
             SecondaryIndex(FooRepo,FooRepo.firstAtLeastTwoIndex.name,FooRepo.firstAtLeastTwoIndex.projection)
           ).ix3TableName
-        val countOfFullTable = IndexUtil.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
-        val countOfIndexTable = IndexUtil.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
+        val countOfFullTable = DbDataUtils.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
+        val countOfIndexTable = DbDataUtils.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
         countOfIndexTable must be < countOfFullTable
     }
   }

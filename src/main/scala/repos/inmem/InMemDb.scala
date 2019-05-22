@@ -9,7 +9,7 @@ import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
 class InMemDb extends Database {
-  private val repoMap: collection.concurrent.Map[String, InMemRepoImpl[_, _]] =
+  private[repos] val repoMap: collection.concurrent.Map[String, InMemRepoImpl[_, _]] =
     collection.concurrent.TrieMap.empty
 
   private def withRepoImpl[Id, M, R](repo: Repo[Id, M])(block: InMemRepoImpl[repo.KeyType, repo.ValueType] => R) = {

@@ -8,7 +8,7 @@ import repos.ApplyIfDefined
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-private class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
+private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
   private var pk = 1
   private val main = mutable.ArrayBuffer.empty[EntryTableRecord[Id, M]]
   private val latest = scala.collection.mutable.Map.empty[Id, (Long, M)]

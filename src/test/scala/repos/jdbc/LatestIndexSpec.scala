@@ -1,35 +1,13 @@
-package repos
+package repos.jdbc
 
-import java.util.UUID
 import org.scalatest._
-import repos.SecondaryIndexQueries.ExpectLookupCriteria
-import repos.inmem.InMemDb
-import repos.jdbc.JdbcDb
+import repos.testutils.DbDataUtils._
 import repos.testutils.TestUtils._
 import repos.testutils._
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class IndexWithDeletionSpec extends WordSpec with MustMatchers {
-
-  private def populateData(db: Database)(implicit ec:ExecutionContext): Unit = {
-    val id1 = FooId(UUID.randomUUID)
-    val id2 = FooId(UUID.randomUUID)
-    val id3 = FooId(UUID.randomUUID)
-    val id4 = FooId(UUID.randomUUID)
-    val id5 = FooId(UUID.randomUUID)
-    val id6 = FooId(UUID.randomUUID)
-
-    await(db.run(FooRepo.insert(id1, "8")))
-    await(db.run(FooRepo.insert(id2, "14")))
-    await(db.run(FooRepo.insert(id3, "275")))
-    await(db.run(FooRepo.insert(id4, "35")))
-    await(db.run(FooRepo.insert(id5, "ababa")))
-    await(db.run(FooRepo.insert(id6, "")))
-
-    await(db.run(FooRepo.insert(id2, "1"))) // Change valid to invalid. Appends in full table, updates in latest table
-  }
+class LatestIndexSpec extends WordSpec with MustMatchers {
 
   "Latest Index table" must {
 
@@ -37,7 +15,7 @@ class IndexWithDeletionSpec extends WordSpec with MustMatchers {
       val jdb = makeH2DB
       val db = makeH2JdbcDb(jdb)
       await(db.run(FooRepo.create))
-      populateData(db)
+      populateData2(db)
       val nameOfFullTable   = FooRepo.name
       val nameOfLatestTable = FooRepo.name + "_latest"
       val nameOfFullIndexTable   = db.innerIndex(FooRepo.firstAtLeastTwoIndex).ix3TableName
@@ -51,16 +29,6 @@ class IndexWithDeletionSpec extends WordSpec with MustMatchers {
       sizeOfTable(db, nameOfFullIndexTable)   must be (4)
       sizeOfTable(db, nameOfLatestIndexTable) must be (3)
       await(jdb.shutdown)
-    }
-
-    "delete records before inserting with in-memory DB" in {
-      val db = new InMemDb
-      await(db.run(FooRepo.create))
-      populateData(db)
-      await(db.run(FooRepo.getEntries())).size     must be (7)
-      await(db.run(FooRepo.allLatestEntries)).size must be (6)
-      await(db.run(FooRepo.firstAtLeastTwoIndex.countAll))       must be (4) // TODO fix this test; table size is right but countAll is wrong
-      await(db.run(FooRepo.firstAtLeastTwoLatestIndex.countAll)) must be (3)
     }
   }
 

@@ -1,15 +1,14 @@
-package repos
+package repos.testutils
 
 import java.util.UUID
-
+import repos.Database
 import repos.jdbc.JdbcDb
-import repos.testutils.{FooId, FooRepo}
 import repos.testutils.TestUtils.await
-
 import scala.concurrent.ExecutionContext
 
-object IndexUtil {
-  def populateData1(db:Database)(implicit ec:ExecutionContext) = {
+object DbDataUtils {
+
+  def populateData1(db:Database)(implicit ec: ExecutionContext): Unit = {
     val id1 = FooId(UUID.randomUUID())
     val id2 = FooId(UUID.randomUUID())
     val id3 = FooId(UUID.randomUUID())
@@ -28,6 +27,25 @@ object IndexUtil {
     await(db.run(FooRepo.insert(id2, "1")))
     // See also: .insertWithoutLatest
   }
+
+  def populateData2(db: Database)(implicit ec: ExecutionContext): Unit = {
+    val id1 = FooId(UUID.randomUUID)
+    val id2 = FooId(UUID.randomUUID)
+    val id3 = FooId(UUID.randomUUID)
+    val id4 = FooId(UUID.randomUUID)
+    val id5 = FooId(UUID.randomUUID)
+    val id6 = FooId(UUID.randomUUID)
+
+    await(db.run(FooRepo.insert(id1, "8")))
+    await(db.run(FooRepo.insert(id2, "14")))
+    await(db.run(FooRepo.insert(id3, "275")))
+    await(db.run(FooRepo.insert(id4, "35")))
+    await(db.run(FooRepo.insert(id5, "ababa")))
+    await(db.run(FooRepo.insert(id6, "")))
+
+    await(db.run(FooRepo.insert(id2, "1"))) // Change valid to invalid. Appends in full table, updates in latest table
+  }
+
   // TODO: remove blocking
   def sizeOfTable(db:JdbcDb, nameOfTable:String) : Int = {
     {
