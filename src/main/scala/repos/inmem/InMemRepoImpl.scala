@@ -31,7 +31,7 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     main ++= entries
     val prepared: Seq[(Id, (Long, M))] = entries.map(e => e.id -> (e.pk, e.entry))
     indexMap.values.foreach { indexTable =>
-      if(indexTable.index.isLatest)
+      if(indexTable.index.isOnLatest)
         indexTable.deleteAction(prepared.map(_._1).toSet)
       indexTable.indexAction(prepared)
     }
@@ -91,7 +91,6 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     def count(c: LookupCriteria[R])(implicit ec: ExecutionContext) = find(c, None, None).size
 
     def criteriaToCollectionFilter(criteria: LookupCriteria[R]): (R => Boolean) = criteria match {
-      case All() => _ => true
       case Equals(v) => _ == v
       case InSet(vs) => vs.contains
       case e@LargerThan(v) => e.ev.gt(_, v)
@@ -103,11 +102,13 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     }
 
     private def allIndexedValues =
-      (for {
+      if(index.isOnLatest)
+        data.map(_._1)
+      else for {
         m <- data
         vpair <- m._2
-        v <- latest if (v._1 == vpair._2 && v._2._1 == vpair._1)
-      } yield m._1)
+        v <- latest if v._1 == vpair._2 && v._2._1 == vpair._1
+      } yield m._1
 
     def aggregate(agg: AggregationFunction) = agg match {
       case Max => Some(allIndexedValues.max)

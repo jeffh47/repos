@@ -60,9 +60,9 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
           _ <- DBIO.sequence((newEntries zip pkList).toSeq.sortBy(t => idMapper.toUUID(t._1.id)).map {
             e => latestEntryTable.insertOrUpdate((e._1.id, e._1.entry, e._2))
           })
-          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isLatest).map(
+          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isOnLatest).map(
             _.buildDeleteAction(elements.map(_._1).toSet)))
-          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isLatest).map(
+          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isOnLatest).map(
             _.buildInsertAction(elements zip pkList)))
         } yield pkList
         db.run(r.transactionally)
@@ -160,19 +160,22 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
       }
 
       private def idsSatisfying[T <: Rep[_]](sqlFilter: Rep[R] => T)(implicit wt: CanBeQueryCondition[T]) =
-        (for {
+        if(index.isOnLatest)
+          indexTable.withFilter(x => sqlFilter(x.value)).map(_.id)
+        else for {
           m <- indexTable if sqlFilter(m.value)
-          v <- latestEntryTable if (v.id === m.id && v.parentPk === m.parentPk)
-        } yield v.id)
+          v <- latestEntryTable if v.id === m.id && v.parentPk === m.parentPk
+        } yield v.id
 
       private def allIndexedValues =
-        (for {
+        if(index.isOnLatest)
+          indexTable.map(_.value)
+        else for {
           m <- indexTable
-          v <- latestEntryTable if (v.id === m.id && v.parentPk === m.parentPk)
-        } yield m.value)
+          v <- latestEntryTable if v.id === m.id && v.parentPk === m.parentPk
+        } yield m.value
 
       def criteriaToSqlFilter(criteria: LookupCriteria[R]): (Rep[R] => Rep[Boolean]) = criteria match {
-        case All() => _ => true
         case Equals(v) => _ === v
         case InSet(vs) => _.inSet(vs)
         case LargerThan(v) => _ > v

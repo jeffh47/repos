@@ -241,8 +241,9 @@ object TableJanitor {
         inner.indexTable.asInstanceOf[lifted.TableQuery[JdbcDb#Ix3Table[Id, R]]]
           .filter(_.parentPk inSet pksToIndex).map(_.parentPk).result).toSet
     val unindexedEntries = entries.filterNot(e => alreadyIndexedPk.contains(e._2))
-    //todo handle Latest indexes
     if (unindexedEntries.nonEmpty) {
+      if(indexTable.isOnLatest)
+        jdbcDb.jc.blockingWrapper(inner.buildDeleteAction(unindexedEntries.map(_._1._1).toSet))
       jdbcDb.jc.blockingWrapper(inner.buildInsertAction(unindexedEntries))
       log(s"Repo ${indexTable.repo.name}: indexed ${unindexedEntries.size} entries into ${indexTable.name}")
     }
@@ -293,7 +294,7 @@ object TableJanitor {
           val indexCompleteUpTo = lookupInStatusTable(readJdbcDb, statusTable, index)
           if (items.last.pk > indexCompleteUpTo) {
             TableJanitor.ensureIndexed(writeJdbcDb, index,
-              indexableItems.filter(_._2 > indexCompleteUpTo), log)
+              indexableItems.filter(_._2 > indexCompleteUpTo), log) //todo: index from latest table when index.isOnLatest
           }
       }
     }

@@ -46,7 +46,6 @@ object DbDataUtils {
     await(db.run(FooRepo.insert(id2, "1"))) // Change valid to invalid. Appends in full table, updates in latest table
   }
 
-  // TODO: remove blocking
   def sizeOfTable(db:JdbcDb, nameOfTable:String) : Int = {
     {
       val s = db.asInstanceOf[JdbcDb].db.source.createConnection().createStatement()

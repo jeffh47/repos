@@ -38,7 +38,7 @@ class LatestIndexSpec extends WordSpec with MustMatchers {
     val r = mutable.ListBuffer[(String, String)]()
     val rs = s.getResultSet
     while(rs.next())
-      r += (rs.getString(keyCol) -> rs.getString(valueCol)) //todo decode with JdbcDb.parse if encoded
+      r += (rs.getString(keyCol) -> rs.getString(valueCol))
     r
   }
 
