@@ -1,10 +1,7 @@
 package repos.jdbc
 
 import org.scalatest._
-import repos.testutils.DbDataUtils._
-import repos.testutils.TestUtils._
 import repos.testutils._
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class LatestIndexSpec extends WordSpec with MustMatchers {
@@ -20,33 +17,15 @@ class LatestIndexSpec extends WordSpec with MustMatchers {
       val nameOfLatestTable = FooRepo.name + "_latest"
       val nameOfFullIndexTable   = db.innerIndex(FooRepo.firstAtLeastTwoIndex).ix3TableName
       val nameOfLatestIndexTable = db.innerIndex(FooRepo.firstAtLeastTwoLatestIndex).ix3TableName
-      println(  "Full table\n" + contents(db, nameOfFullTable,      "uuid", "entry_bin").mkString("\n"))
-      println("Latest table\n" + contents(db, nameOfLatestTable,      "id", "entry_bin").mkString("\n"))
-      println(  "Full index\n" + contents(db, nameOfFullIndexTable,   "id", "value"    ).mkString("\n"))
-      println("Latest index\n" + contents(db, nameOfLatestIndexTable, "id", "value"    ).mkString("\n"))
-      sizeOfTable(db, nameOfFullTable)        must be (7)
-      sizeOfTable(db, nameOfLatestTable)      must be (6)
-      sizeOfTable(db, nameOfFullIndexTable)   must be (4)
-      sizeOfTable(db, nameOfLatestIndexTable) must be (3)
+      println(  "Full table\n" + tableContents(db, nameOfFullTable,      "uuid", "entry_bin").mkString("\n"))
+      println("Latest table\n" + tableContents(db, nameOfLatestTable,      "id", "entry_bin").mkString("\n"))
+      println(  "Full index\n" + tableContents(db, nameOfFullIndexTable,   "id", "value"    ).mkString("\n"))
+      println("Latest index\n" + tableContents(db, nameOfLatestIndexTable, "id", "value"    ).mkString("\n"))
+      tableSize(db, nameOfFullTable)        must be (7)
+      tableSize(db, nameOfLatestTable)      must be (6)
+      tableSize(db, nameOfFullIndexTable)   must be (4)
+      tableSize(db, nameOfLatestIndexTable) must be (3)
       await(jdb.shutdown)
     }
-  }
-
-  private def contents(db: JdbcDb, nameOfTable: String, keyCol: String, valueCol: String) = {
-    val s = db.db.source.createConnection.createStatement
-    s.execute(s"select $keyCol, $valueCol from $nameOfTable")
-    val r = mutable.ListBuffer[(String, String)]()
-    val rs = s.getResultSet
-    while(rs.next())
-      r += (rs.getString(keyCol) -> rs.getString(valueCol))
-    r
-  }
-
-  private def sizeOfTable(db: JdbcDb, nameOfTable: String): Int = {
-    val s = db.db.source.createConnection.createStatement
-    s.execute(s"select count(*) as a from $nameOfTable")
-    val rs = s.getResultSet
-    rs.next()
-    rs.getInt("a")
   }
 }

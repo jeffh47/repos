@@ -1,7 +1,6 @@
 package repos.jdbc
 
 import org.scalatest._
-import repos.testutils.TestUtils.await
 import repos.testutils._
 import repos.{ Database, SecondaryIndex }
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -12,8 +11,8 @@ class PartialIndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers 
   type FixtureParam = Database
 
   def withFixture(test: OneArgTest) = {
-    val jdb = TestUtils.makeH2DB()
-    val JdbcDb = TestUtils.makeH2JdbcDb(jdb)
+    val jdb = makeH2DB()
+    val JdbcDb = makeH2JdbcDb(jdb)
 
     await(JdbcDb.run(FooRepo.create()))
     try {
@@ -27,14 +26,14 @@ class PartialIndexSpec extends org.scalatest.fixture.FlatSpec with MustMatchers 
 
   "Partial index" should "lack records for un-matched inputs" in {
     db =>
-      DbDataUtils.populateData1(db)
+      populateData1(db)
       val nameOfFullTable = FooRepo.name
       val nameOfIndex =
         db.asInstanceOf[JdbcDb].innerIndex(
           SecondaryIndex(FooRepo,FooRepo.firstAtLeastTwoIndex.name,FooRepo.firstAtLeastTwoIndex.projection)
         ).ix3TableName
-      val countOfFullTable = DbDataUtils.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfFullTable)
-      val countOfIndexTable = DbDataUtils.sizeOfTable(db.asInstanceOf[JdbcDb], nameOfIndex)
+      val countOfFullTable = tableSize(db.asInstanceOf[JdbcDb], nameOfFullTable)
+      val countOfIndexTable = tableSize(db.asInstanceOf[JdbcDb], nameOfIndex)
       countOfIndexTable must be < countOfFullTable
   }
 }

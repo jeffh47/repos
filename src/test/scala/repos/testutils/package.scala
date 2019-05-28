@@ -1,12 +1,20 @@
-package repos.testutils
+package repos
 
 import java.util.UUID
-import repos.Database
-import repos.jdbc.JdbcDb
-import repos.testutils.TestUtils.await
-import scala.concurrent.ExecutionContext
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration.Duration
 
-object DbDataUtils {
+package object testutils {
+
+  def await[R](f: => Future[R]): R = Await.result(f, Duration.Inf)
+
+  def awaitStream[T](publisher: RepoPublisher[T]): ArrayBuffer[T] = {
+    val b = ArrayBuffer.empty[T]
+    await(publisher.foreach(s => synchronized { b+=s }))
+    b.result()
+  }
 
   def populateData1(db:Database)(implicit ec: ExecutionContext): Unit = {
     val id1 = FooId(UUID.randomUUID())
@@ -44,19 +52,5 @@ object DbDataUtils {
     await(db.run(FooRepo.insert(id6, "")))
 
     await(db.run(FooRepo.insert(id2, "1"))) // Change valid to invalid. Appends in full table, updates in latest table
-  }
-
-  def sizeOfTable(db:JdbcDb, nameOfTable:String) : Int = {
-    {
-      val s = db.asInstanceOf[JdbcDb].db.source.createConnection().createStatement()
-      val sql = s"select count(*) as a from ${nameOfTable}"
-      s.execute( sql)
-      val rs = s.getResultSet()
-      rs.next()
-      val num = rs.getInt("a")
-      // useful for debugging:
-      //println(s"sql=${sql}\ncount=${num}")
-      num
-    }
   }
 }

@@ -1,19 +1,17 @@
 package repos
 
 import java.util.UUID
-
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.{FlatSpec, MustMatchers}
+import org.scalatest._
 import repos.Action._
 import repos.SecondaryIndexQueries._
-import repos.inmem.InMemDb
-import repos.testutils.TestUtils.await
-import repos.testutils.{FooId, FooRepo, TestUtils}
-
+import repos.inmem._
+import repos.jdbc._
+import repos.testutils._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+import scala.util._
 
 
 object GenLookups {
@@ -162,8 +160,8 @@ class EquivalenceSpec extends FlatSpec with MustMatchers with PropertyChecks {
   }
 
   class Fixture {
-    val jdb = TestUtils.makeH2DB()
-    val jdbcDb = TestUtils.makeH2JdbcDb(jdb)
+    val jdb = makeH2DB()
+    val jdbcDb = makeH2JdbcDb(jdb)
 
     val inMemDb = new InMemDb
 

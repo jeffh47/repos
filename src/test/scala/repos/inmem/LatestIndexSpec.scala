@@ -1,8 +1,6 @@
 package repos.inmem
 
 import org.scalatest._
-import repos.testutils.DbDataUtils._
-import repos.testutils.TestUtils._
 import repos.testutils._
 import scala.concurrent.ExecutionContext.Implicits.global
 

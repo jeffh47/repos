@@ -60,10 +60,13 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
           _ <- DBIO.sequence((newEntries zip pkList).toSeq.sortBy(t => idMapper.toUUID(t._1.id)).map {
             e => latestEntryTable.insertOrUpdate((e._1.id, e._1.entry, e._2))
           })
-          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isOnLatest).map(
-            _.buildDeleteAction(elements.map(_._1).toSet)))
-          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isOnLatest).map(
-            _.buildInsertAction(elements zip pkList)))
+          // Update any indices on Latest table
+          _ <- DBIO.sequence(effectiveIndexMap.values.filter(_.index.isOnLatest).toSeq.flatMap { index =>
+            // Each individual insert must be preceded by a delete of old values
+            (elements zip pkList).map { case (e, pk) =>
+              index.buildDeleteAction(Set(e._1)) andThen index.buildInsertAction(Seq(e -> pk))
+            }
+          })
         } yield pkList
         db.run(r.transactionally)
       } else {
@@ -92,7 +95,8 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
     def delete(ids: Set[Id])(implicit ec: ExecutionContext): Future[Unit] = {
       db.run(
         entryTable.filter(_.uuid inSet ids).delete andThen
-          latestEntryTable.filter(_.id inSet ids).delete).map(_ => ())
+          latestEntryTable.filter(_.id inSet ids).delete andThen
+            DBIO.sequence(indexMap.values.map(_.indexTable.filter(_.id inSet ids).delete))).map(_ => ())
     }
 
     def getEntries(fromPk: Long, idsConstraint: Option[Seq[Id]], excludePks: Set[Long],

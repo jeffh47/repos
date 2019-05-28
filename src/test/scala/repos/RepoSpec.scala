@@ -1,23 +1,19 @@
 package repos
 
 import java.util.UUID
-
-import org.scalatest.{MustMatchers, OptionValues}
-import repos.inmem.InMemDb
-import repos.testutils.{FooRepo, FooId, TestUtils}
+import org.scalatest._
+import repos.inmem._
+import repos.jdbc._
+import repos.testutils._
 import scala.concurrent.ExecutionContext.Implicits.global
-
-import TestUtils.await
-import TestUtils.awaitStream
-
 
 class RepoSpec extends org.scalatest.fixture.FlatSpec with MustMatchers with OptionValues {
   type FixtureParam = Database
 
   // Runs each tests against JDbcDb and InMemDb
   def withFixture(test: OneArgTest) = {
-    val jdb = TestUtils.makeH2DB()
-    val JdbcDb = TestUtils.makeH2JdbcDb(jdb)
+    val jdb = makeH2DB()
+    val JdbcDb = makeH2JdbcDb(jdb)
 
     object InMemDb extends InMemDb
 

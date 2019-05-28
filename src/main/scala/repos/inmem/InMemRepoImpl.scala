@@ -44,6 +44,7 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
   def delete(ids: Set[Id]) = {
     main --= main.filter(e => ids.contains(e.id))
     latest --= ids
+    indexMap.values.foreach(_.deleteAction(ids))
   }
 
   def allLatestEntries: Seq[(Id, M)] = latest.map(t => (t._1, t._2._2)).toVector.sortBy(_._1)
