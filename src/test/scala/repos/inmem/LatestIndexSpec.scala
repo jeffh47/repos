@@ -14,8 +14,8 @@ class LatestIndexSpec extends WordSpec with MustMatchers {
       populateData2(db)
       await(db.run(FooRepo.getEntries())).size     must be (7)
       await(db.run(FooRepo.allLatestEntries)).size must be (6)
-      db.repoMap("foo").indexMap("first_at_least_two_ch").data.size        must be (4)
-      db.repoMap("foo").indexMap("first_at_least_two_ch_latest").data.size must be (3)
+      await(db.run(FooRepo.firstAtLeastTwoIndex.tableSize)) must be (4)
+      await(db.run(FooRepo.firstAtLeastTwoLatestIndex.tableSize)) must be (3)
     }
   }
 }

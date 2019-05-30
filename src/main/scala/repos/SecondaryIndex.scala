@@ -6,7 +6,7 @@ import repos.SecondaryIndex.ProjectionType
 import scala.language.existentials
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
-//todo: preserve binary compat
+
 case class SecondaryIndex[Id, M, R](repo: Repo[Id, M], name: String, projection: M => Seq[R], isOnLatest: Boolean = false)(implicit val projectionType : ProjectionType[R])
 
 class SecondaryIndexQueries[Id, M, R](val index: SecondaryIndex[Id, M, R]) extends AnyVal {
@@ -22,6 +22,8 @@ class SecondaryIndexQueries[Id, M, R](val index: SecondaryIndex[Id, M, R]) exten
 
   def count(m: LookupFunction) =
     IndexCountAction(index, m(ExpectLookupCriteria(index)))
+
+  def tableSize: Action[NoStream, Int] = IndexTableSizeAction(index)
 
   def allMatching(v: R, offset: Option[Int] = None, count: Option[Int] = None) =
     IndexGetAllAction(index, Equals(v), offset, count)

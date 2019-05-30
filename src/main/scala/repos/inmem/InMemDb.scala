@@ -9,7 +9,7 @@ import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
 class InMemDb extends Database {
-  private[repos] val repoMap: collection.concurrent.Map[String, InMemRepoImpl[_, _]] =
+  private val repoMap: collection.concurrent.Map[String, InMemRepoImpl[_, _]] =
     collection.concurrent.TrieMap.empty
 
   private def withRepoImpl[Id, M, R](repo: Repo[Id, M])(block: InMemRepoImpl[repo.KeyType, repo.ValueType] => R) = {
@@ -69,6 +69,8 @@ class InMemDb extends Database {
         Future.successful(withInnerIndex(index)(_.aggregate(agg)))
       case IndexCountAction(index, value) =>
         Future.successful(withInnerIndex(index)(_.count(value)))
+      case IndexTableSizeAction(index) =>
+        Future.successful(withInnerIndex(index)(_.tableSize))
     }
   }
 
@@ -108,7 +110,7 @@ class InMemDb extends Database {
 
 object InMemDb {
 
-  private[repos] class InMemorySubscription[T](subscriber: Subscriber[_ >: T], data: Seq[T]) extends Subscription {
+  private class InMemorySubscription[T](subscriber: Subscriber[_ >: T], data: Seq[T]) extends Subscription {
     @volatile var pos = 0
 
     override def cancel(): Unit = {}

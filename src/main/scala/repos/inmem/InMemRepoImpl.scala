@@ -8,7 +8,7 @@ import repos.ApplyIfDefined
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
+private class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
   private var pk = 1
   private val main = mutable.ArrayBuffer.empty[EntryTableRecord[Id, M]]
   private val latest = scala.collection.mutable.Map.empty[Id, (Long, M)]
@@ -22,6 +22,13 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
   def insert(pairs: (Id, M)*): Unit = {
     val prepared = insertWithoutLatest(pairs: _*)
     latest ++= prepared
+    indexMap.values.filter(_.index.isOnLatest).foreach { indexTable =>
+        // Each individual insert must be preceded by a delete of old values
+        prepared.foreach { e =>
+          indexTable.deleteAction(Set(e._1))
+          indexTable.indexAction(Seq(e))
+        }
+    }
   }
 
   def insertWithoutLatest(pairs: (Id, M)*): Seq[(Id, (Long, M))] = {
@@ -30,11 +37,7 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     }
     main ++= entries
     val prepared: Seq[(Id, (Long, M))] = entries.map(e => e.id -> (e.pk, e.entry))
-    indexMap.values.foreach { indexTable =>
-      if(indexTable.index.isOnLatest)
-        indexTable.deleteAction(prepared.map(_._1).toSet)
-      indexTable.indexAction(prepared)
-    }
+    indexMap.values.filterNot(_.index.isOnLatest).foreach(_.indexAction(prepared))
     pk += pairs.length
     prepared
   }
@@ -90,6 +93,8 @@ private[repos] class InMemRepoImpl[Id, M](repo: Repo[Id, M]) {
     }
 
     def count(c: LookupCriteria[R])(implicit ec: ExecutionContext) = find(c, None, None).size
+
+    def tableSize: Int = data.values.map(_.size).sum
 
     def criteriaToCollectionFilter(criteria: LookupCriteria[R]): (R => Boolean) = criteria match {
       case Equals(v) => _ == v

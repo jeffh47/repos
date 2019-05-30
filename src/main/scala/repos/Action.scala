@@ -73,6 +73,8 @@ object Action {
 
   case class IndexCountAction[Id, M, R](index: SecondaryIndex[Id, M, R], criteria: LookupCriteria[R]) extends IndexAction[Id, M, R, Int]
 
+  case class IndexTableSizeAction[Id, M, R](index: SecondaryIndex[Id, M, R]) extends IndexAction[Id, M, R, Int]
+
   case class IndexAggegrationAction[Id, M, R](index: SecondaryIndex[Id, M, R], agg: AggregationFunction) extends IndexAction[Id, M, R, Option[R]]
 
   sealed trait AggregationFunction

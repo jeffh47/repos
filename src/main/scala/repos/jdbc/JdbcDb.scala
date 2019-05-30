@@ -197,6 +197,8 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
         db.run(idsSatisfying(criteriaToSqlFilter(criteria)).size.result)
       }
 
+      def tableSize: Future[Int] = db.run(indexTable.size.result)
+
       def aggregate(agg: AggregationFunction): Future[Option[R]] = agg match {
         case Max => db.run(allIndexedValues.max.result)
         case Min => db.run(allIndexedValues.min.result)
@@ -315,6 +317,8 @@ class JdbcDb(val profile: JdbcProfile, private[repos] val db: JdbcProfile#Backen
       innerIndex(index).all(criteria, offset, count, ctx)
     case IndexCountAction(index, criteria) =>
       innerIndex(index).count(criteria)
+    case IndexTableSizeAction(index) =>
+      innerIndex(index).tableSize
     case IndexAggegrationAction(index, agg) =>
       innerIndex(index).aggregate(agg)
   }
